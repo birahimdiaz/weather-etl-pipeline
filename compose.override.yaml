@@ -1,0 +1,30 @@
+services:
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    image: weather-airflow:local
+    user: "${AIRFLOW_UID:?Ajoute AIRFLOW_UID dans .env}:0"
+    command: standalone
+
+    env_file:
+      - .env
+
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: "admin:admin"
+      POSTGRES_HOST: postgres
+      PYTHONPATH: /opt/project/src
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    volumes:
+      - ./airflow:/opt/airflow
+      - ./src:/opt/project/src:ro
+      - ./data:/opt/project/data
+
+    depends_on:
+      postgres:
+        condition: service_healthy

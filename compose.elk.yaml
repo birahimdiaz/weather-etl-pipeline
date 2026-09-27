@@ -1,0 +1,56 @@
+services:
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.4
+    environment:
+      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+      PIPELINE_WORKERS: "1"
+      PIPELINE_BATCH_SIZE: "50"
+      XPACK_MONITORING_ENABLED: "false"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./data/raw:/weather/raw:ro
+      - logstash_data:/usr/share/logstash/data
+    mem_limit: 1g
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.4
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      node.store.allow_mmap: "false"
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    mem_limit: 2g
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.5.4
+    environment:
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+      SERVER_HOST: "0.0.0.0"
+    ports:
+      - "127.0.0.1:5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    mem_limit: 2g
+
+volumes:
+  elasticsearch_data:
+  kibana_data:
+  logstash_data:

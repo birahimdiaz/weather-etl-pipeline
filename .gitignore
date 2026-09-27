@@ -1,0 +1,21 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Identifiants locaux
+.env
+.env.*
+!.env.example
+
+# Données météo
+data/
+
+# Fichiers internes Airflow, sauf les DAGs
+airflow/*
+!airflow/dags/
+airflow/dags/__pycache__/
+
+# Logs et fichiers locaux
+*.log
+.vscode/
